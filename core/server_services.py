@@ -70,7 +70,7 @@ class ServerServices:
         os.makedirs(self.__locked_dir(fn))
 
     def __unlock(self, fn):
-        os.rmdir(self.__locked_dir(fn)) 
+        os.rmdir(self.__locked_dir(fn))
 
     def __wait_unlocked(self, fn):
         i = 0
