@@ -1,17 +1,30 @@
+"""
+" @author VaL
+" @copyright Copyright (C) 2016 VaL::bOK
+" @license GNU GPL v2
+"""
+
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler, SimpleXMLRPCDispatcher
 from base64 import b64decode
 from xmlrpclib import ServerProxy
 
 import os
+import sys
+import time
 
 import server_services
 from file import *
 
-import time
-
+"""
+" Unfortunatelly could not pass credentials to RequestHandler
+" so using global vars.
+"""
 _g_server_user = ""
 _g_server_password = ""
 
+"""
+" Handles BASIC AUTH.
+"""
 class RequestHandler(SimpleXMLRPCRequestHandler):
     def parse_request(self):
         if SimpleXMLRPCRequestHandler.parse_request(self):
@@ -30,22 +43,20 @@ def _parse_host(s):
     host, port = hosts.split(":")
     return (user, password), (host, int(port))
 
-def _files(d):
-    result = []
-    for (root, dirs, files) in os.walk(d):
-        for file in files:
-            result.append(os.path.join( root[len(d):], file ))
-
-    return result
-
+"""
+" Base node handler.
+"""
 class Node:
     def __init__(self, host, watch_dir):
         self._host = host
         if watch_dir[-1] != '/':
             watch_dir += '/'
-        
+
         self._dir = watch_dir
 
+"""
+" Handles connections and makes some actions.
+"""
 class ServerNode(Node):
     def start(self):
         global _g_server_user, _g_server_password
@@ -57,23 +68,71 @@ class ServerNode(Node):
         server.register_instance(server_services.ServerServices(self._dir))
         server.serve_forever()
 
+"""
+" Node to be handled as client.
+" Monitors the dir and uploads changes to server.
+"""
 class ClientNode(Node):
-    def start(self):
-        server = ServerProxy(self._host)
 
+    def __init__(self,  host, watch_dir):
+        Node.__init__(self, host, watch_dir)
+        self._server = ServerProxy(self._host)
+
+    def _upload(self, f, fn):
+        signature = self._server.signature(fn)
+        tmp = server_services.tmp_file(signature.data)
+        delta = f.delta(tmp)
+        self._server.patch(fn, server_services.raw(delta))
+
+    def _download(self, f, fn):
+        signature = f.signature()
+        delta = self._server.delta(fn, server_services.raw(signature))
+        tmp = server_services.tmp_file(delta.data)
+        f.patch(tmp)
+
+    """
+    " Starts monitoring the dir.
+    """
+    def start(self):
         print "Starting monitoring " + self._dir + "*"
 
         while True:
             print
-            files = _files(self._dir)
-            for fn in files:
-                f = File(self._dir + fn)
-                print "Syncing:", fn
-                signature = server.signature(fn)
-                tmp = server_services.tmp_file(signature.data)
-                d = f.delta(tmp)
-                server.patch(fn, server_services.raw(d))
+            current_files = server_services.file_table(self._dir)
+            remote_files = self._server.file_table()
 
-            time.sleep(5)
+            for fn in current_files:
+                f = File(self._dir + fn)
+                upload = True
+                if fn in remote_files:
+                    if f.size == remote_files[fn]['size']:
+                        print ". skipping", fn
+                        continue
+
+                    if f.changed < remote_files[fn]['changed']:
+                        upload = False
+
+                if upload:
+                    print "+ uploading", fn
+                    self._upload(f, fn)
+                else:
+                    print "- downloading", fn
+                    self._download(f, fn)
+            
+            for fn in remote_files:
+                f = File(self._dir + fn)
+                if f.exists:
+                    continue
+                
+                print "- downloading", fn
+                self._download(f, fn)
+
+            print "*",
+            for x in range(10, 0, -1):
+                print x,
+                sys.stdout.flush()
+                time.sleep(1)
+
+            print
 
 

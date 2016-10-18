@@ -1,3 +1,9 @@
+"""
+" @author VaL
+" @copyright Copyright (C) 2016 VaL::bOK
+" @license GNU GPL v2
+"""
+
 import tempfile
 import librsync
 import os
@@ -9,7 +15,7 @@ def _tmp_file():
 
 """
 " File handler to read and write using librsync to sync source with destination.
-" There are 3 steps to synchronize a file. 
+" There are 3 steps to synchronize a file.
 " 1. Generate a signature for the destination file.
 " 2. Generate a delta for the source file (using the signature).
 " 3. Patch the destination file using the generated delta.
@@ -28,7 +34,6 @@ class File:
         self._path = path
         basedir = os.path.dirname(path)
         if basedir and not os.path.exists(basedir):
-            print "basedir " + basedir
             os.makedirs(basedir)
 
         if not os.path.isfile(path):
@@ -65,11 +70,12 @@ class File:
     " @return tmpfile
     """
     def patch(self, delta):
-        with (tempfile.NamedTemporaryFile(prefix = os.path.basename(self._path), suffix = '.sync', dir = os.path.dirname(self._path), delete = False)) as synced:
+        with (tempfile.NamedTemporaryFile(prefix=os.path.basename(self._path), suffix='.sync',
+            dir=os.path.dirname(self._path), delete=False)) as synced:
             try:
                 with open(self._path, 'w+') as current:
                     librsync.patch(current, delta, synced)
-                    os.rename(synced.name, self._path)                    
+                    os.rename(synced.name, self._path)
             finally:
                 try:
                     os.remove(synced.name)
@@ -77,4 +83,19 @@ class File:
                     if e.errno != errno.ENOENT:
                         raise
 
+    def exists(self):
+        return os.path.isfile(self._path)
 
+    """
+    " @return size of file.
+    """
+    @property
+    def size(self):
+        return os.stat(self._path).st_size
+
+    """
+    " @return timestampt of file.
+    """
+    @property
+    def changed(self):
+        return os.path.getmtime(self._path)
