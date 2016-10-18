@@ -1,10 +1,11 @@
 """
-" @author VaL
+" @author VaL Doroshchuk
 " @copyright Copyright (C) 2016 VaL::bOK
 " @license GNU GPL v2
 """
 
 from file import *
+from logger import *
 
 import tempfile
 import xmlrpclib
@@ -50,6 +51,28 @@ def file_table(d):
     return t
 
 """
+" @return Filename that file with this name has been purged.
+"""
+def removed_filename(fn):
+    fs = fn.split("/")
+    f = fs[len(fs) - 1]
+    del fs[len(fs) - 1]
+    bs = "/".join(fs)
+    if bs:
+        bs += "/"
+
+    return "{}.{}.syncopy_removed".format(bs, f)
+
+"""
+" @return True if filename seems like of removed file.
+"""
+def removed_file(fn):
+    fn = os.path.basename(fn)
+    fs = fn.split(".")
+
+    return fs[0] == "" and fs[len(fs) - 1] == "syncopy_removed"
+
+"""
 " Handles requests from remote clients.
 """
 class ServerServices:
@@ -60,22 +83,30 @@ class ServerServices:
     def __init__(self, d):
         self._dir = d
 
-    def __locked_dir(self, fn):
+    def __locked_key(self, fn):
         return self._dir + fn + ".syncopy_locked"
 
     def __locked(self, fn):
-        return os.path.exists(self.__locked_dir(fn))
+        return os.path.exists(self.__locked_key(fn))
 
     def __lock(self, fn):
-        os.makedirs(self.__locked_dir(fn))
+        try:
+            log_info("Lock file {}".format(fn))
+            os.makedirs(self.__locked_key(fn))
+        except:
+            pass
 
     def __unlock(self, fn):
-        os.rmdir(self.__locked_dir(fn))
+        try:
+            log_info("Unlock file {}".format(fn))
+            os.rmdir(self.__locked_key(fn))
+        except:
+            pass
 
     def __wait_unlocked(self, fn):
         i = 0
         while self.__locked(fn) and i < 10:
-            print "/waiting", i, fn
+            log_info("/waiting: {}: {}".format(i, fn))
             i += 1
             time.sleep(2)
 
@@ -86,7 +117,9 @@ class ServerServices:
     " @param string Filename.
     """
     def signature(self, fn):
+        log_info("Creating signature for {}".format(fn))
         if not self.__wait_unlocked(fn):
+            log_error("File is locked {}".format(fn))
             return False
 
         return raw(File(self._dir + fn).signature())
@@ -97,7 +130,9 @@ class ServerServices:
     " @param file File handler that open and can be read.
     """
     def delta(self, fn, signature):
+        log_info("Creating delta for {}".format(fn))
         if not self.__wait_unlocked(fn):
+            log_error("File is locked {}".format(fn))
             return False
 
         return raw(File(self._dir + fn).delta(tmp_file(signature.data)))
@@ -107,12 +142,20 @@ class ServerServices:
     " @param string Filename.
     " @param file File handler that open and can be read.
     """
-    def patch(self, fn, delta):
+    def patch(self, fn, delta, ts):
+        log_info("Patching {}".format(fn))
         if not self.__wait_unlocked(fn):
+            log_error("File is locked {}".format(fn))
             return False
 
-        self.__lock(fn)
-        File(self._dir + fn).patch(tmp_file(delta.data))
+        self.__lock(fn)        
+        f = File(self._dir + fn)
+        f.patch(tmp_file(delta.data))
+        f.touch(ts)
+        try:
+            File(self._dir + removed_filename(fn)).remove()
+        except:
+            pass
         self.__unlock(fn)
 
         return True
@@ -122,3 +165,14 @@ class ServerServices:
     """
     def file_table(self):
         return file_table(self._dir)
+
+    """
+    " Removes the file and its dir if empty
+    """
+    def remove_file(self, fn):
+        log_info("Removing file {}".format(fn))
+        self.__lock(fn)
+        File(self._dir + fn).rename(self._dir + removed_filename(fn))
+        self.__unlock(fn)
+
+        return True

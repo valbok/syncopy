@@ -1,5 +1,5 @@
 """
-" @author VaL
+" @author VaL Doroshchuk
 " @copyright Copyright (C) 2016 VaL::bOK
 " @license GNU GPL v2
 """
@@ -14,6 +14,7 @@ import time
 
 import server_services
 from file import *
+from logger import *
 
 """
 " Unfortunatelly could not pass credentials to RequestHandler
@@ -62,7 +63,7 @@ class ServerNode(Node):
         global _g_server_user, _g_server_password
         (_g_server_user, _g_server_password), (host, port) =_parse_host(self._host)
 
-        print "Starting as master on " + host + ":" + str(port) + " for dir " + self._dir
+        log_info("Starting as master on {}:{} for dir {}".format(host, port, self._dir))
 
         server = SimpleXMLRPCServer((host, port), requestHandler = RequestHandler)
         server.register_instance(server_services.ServerServices(self._dir))
@@ -74,7 +75,11 @@ class ServerNode(Node):
 """
 class ClientNode(Node):
 
-    def __init__(self,  host, watch_dir):
+    """
+    " @param host string.
+    " @param Dir to watch for.
+    """
+    def __init__(self, host, watch_dir):
         Node.__init__(self, host, watch_dir)
         self._server = ServerProxy(self._host)
 
@@ -83,59 +88,82 @@ class ClientNode(Node):
     """
     def _upload(self, f, fn):
         signature = self._server.signature(fn)
+        log_info("Got signature for {}".format(fn))
         tmp = server_services.tmp_file(signature.data) if signature else False
         delta = f.delta(tmp) if tmp else False
-        if not tmp or not self._server.patch(fn, server_services.raw(delta)):
-            print "Cound not patch file", fn
+        log_info("Sending delta to patch {}".format(fn))
+        if not tmp or not self._server.patch(fn, server_services.raw(delta), f.changed):
+            log_error("Cound not patch file {}".format(fn))
 
     """
     " Downloads file to local dir.
     """
-    def _download(self, f, fn):
+    def _download(self, f, fn, ts):
         signature = f.signature()
         delta = self._server.delta(fn, server_services.raw(signature))
+        log_info("Got delta for {}".format(fn))
         tmp = server_services.tmp_file(delta.data) if delta else False
         if tmp:
             f.patch(tmp)
+            f.touch(ts)
         else:
-            print "Cound not patch file", fn, tmp
+            log_error("Cound not patch file {}".format(fn))
 
     """
     " Starts monitoring the dir.
     """
     def start(self):
-        print "Starting monitoring " + self._dir + "*"
+        log_info("Starting monitoring {}".format(self._dir))
 
+        current_files = server_services.file_table(self._dir)
         while True:
             print
-            current_files = server_services.file_table(self._dir)
+
             remote_files = self._server.file_table()
 
             for fn in current_files:
                 f = File(self._dir + fn)
+                if not f.exists() and fn in remote_files:
+                    print "/ deleting", fn
+                    self._server.remove_file(fn)
+                    del remote_files[fn]
+                    continue                
+
+                rfn = server_services.removed_filename(fn)
+                if rfn in remote_files and f.changed <= remote_files[rfn]['changed']:
+                    print "// deleting local", fn
+                    f.remove()
+                    continue
+
                 upload = True
                 if fn in remote_files:
                     if f.checksum == remote_files[fn]['checksum']:
                         print ". skipping", fn
                         continue
 
-                    if f.changed < remote_files[fn]['changed']:
-                        upload = False
+                    upload = f.changed > remote_files[fn]['changed']
 
                 if upload:
-                    print "+ uploading", fn
+                    print "-> uploading", fn
                     self._upload(f, fn)
                 else:
-                    print "- downloading", fn
-                    self._download(f, fn)
+                    print "<- downloading", fn
+                    self._download(f, fn, remote_files[fn]["changed"])
 
             for fn in remote_files:
                 f = File(self._dir + fn)
-                if f.exists:
+                if f.exists():
                     continue
 
-                print "- downloading new", fn
-                self._download(f, fn)
+                if server_services.removed_file(fn):
+                    continue
+
+                f.create(remote_files[fn]["changed"])
+
+                print "<- downloading new", fn
+                self._download(f, fn, remote_files[fn]["changed"])
+
+            current_files = server_services.file_table(self._dir)
 
             print "*",
             for x in range(10, 0, -1):
@@ -144,5 +172,6 @@ class ClientNode(Node):
                 time.sleep(1)
 
             print
+
 
 

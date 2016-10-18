@@ -1,5 +1,5 @@
 """
-" @author VaL
+" @author VaL Doroshchuk
 " @copyright Copyright (C) 2016 VaL::bOK
 " @license GNU GPL v2
 """
@@ -10,6 +10,7 @@ import os
 import xmlrpclib
 import errno
 import hashlib
+import time
 
 def _tmp_file():
     return tempfile.SpooledTemporaryFile(max_size=1024 ** 2 * 5, mode='w+')
@@ -33,12 +34,16 @@ class File:
     """
     def __init__(self, path):
         self._path = path
-        basedir = os.path.dirname(path)
+
+    """
+    " Creates file
+    """
+    def create(self, ts = 0): 
+        basedir = os.path.dirname(self._path)
         if basedir and not os.path.exists(basedir):
             os.makedirs(basedir)
 
-        if not os.path.isfile(path):
-            open(path, 'a').close()
+        self.touch(ts)
 
     """
     " Creates a signature of a file.
@@ -51,8 +56,9 @@ class File:
             kwargs['block_size'] = block_size
 
         kwargs['s'] = _tmp_file()
+        f = open(self._path, 'rb') if self.exists() else _tmp_file()
 
-        return librsync.signature(open(self._path, 'rb'), **kwargs)
+        return librsync.signature(f, **kwargs)
 
     """
     " Creates delta versus signature of remote/source file.
@@ -62,17 +68,17 @@ class File:
     def delta(self, signature):
         kwargs = {}
         kwargs['d'] = _tmp_file()
+
         return librsync.delta(open(self._path, 'rb'), signature, **kwargs)
 
     """
     " Patches current file by delta of source file.
     " Usually called on server side.
     " @param Delta is a file handler.
-    " @return tmpfile
     """
     def patch(self, delta):
         with (tempfile.NamedTemporaryFile(prefix=os.path.basename(self._path), suffix='.sync',
-            dir=os.path.dirname(self._path), delete=False)) as synced:
+                dir=os.path.dirname(self._path), delete=False)) as synced:
             try:
                 with open(self._path, 'w+') as current:
                     librsync.patch(current, delta, synced)
@@ -84,6 +90,9 @@ class File:
                     if e.errno != errno.ENOENT:
                         raise
 
+    """
+    " Checks if file exists
+    """
     def exists(self):
         return os.path.isfile(self._path)
 
@@ -95,12 +104,15 @@ class File:
         return os.stat(self._path).st_size
 
     """
-    " @return timestampt of file.
+    " @return timestamp of file.
     """
     @property
     def changed(self):
         return os.path.getmtime(self._path)
 
+    """
+    " @return checksum to compare files.
+    """
     @property
     def checksum(self):
         hash = hashlib.md5()
@@ -108,3 +120,36 @@ class File:
             for block in iter(lambda: f.read(65536), b""):
                 hash.update(block)
         return hash.hexdigest()
+
+    """
+    " Changes modification time.
+    """
+    def touch(self, ts = 0):
+        if not ts:
+            ts = time.time()
+        print ts
+        with open(self._path, 'a'):
+            os.utime(self._path, (ts,ts))
+
+    """
+    " Removes current file
+    """
+    def remove(self):
+        os.remove(self._path)
+        try:
+            basedir = fn
+            while True:
+                basedir = os.path.dirname(basedir)
+                if not basedir:
+                    break
+                os.rmdir(self._dir + basedir)
+        except:
+            pass
+
+    """
+    " Renames current file.
+    """
+    def rename(self, fn):
+        print("renaming to file {}".format(fn))
+        os.rename(self._path, fn)
+        File(fn).touch()
