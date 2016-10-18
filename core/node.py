@@ -37,7 +37,6 @@ class RequestHandler(SimpleXMLRPCRequestHandler):
             self.send_error(401, 'Authentication failed')
             return False
 
-
 def _parse_host(s):
     credits, hosts = s.split("@")
     user, password = credits.split(":")
@@ -114,6 +113,9 @@ class ClientNode(Node):
     """
     def start(self):
         log_info("Starting monitoring {}".format(self._dir))
+        if not os.path.isdir(self._dir):
+            log_error("Dir {} does not exist".format(self._dir))
+            return
 
         current_files = server_services.file_table(self._dir)
         while True:
@@ -127,7 +129,7 @@ class ClientNode(Node):
                     print "/ deleting", fn
                     self._server.remove_file(fn)
                     del remote_files[fn]
-                    continue                
+                    continue
 
                 rfn = server_services.removed_filename(fn)
                 if rfn in remote_files and f.changed <= remote_files[rfn]['changed']:

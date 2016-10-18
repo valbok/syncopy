@@ -33,12 +33,12 @@ class File:
     " @param Path to file. If does not exist, will be created.
     """
     def __init__(self, path):
-        self._path = path
+        self._path = path.replace("../", "")
 
     """
     " Creates file
     """
-    def create(self, ts = 0): 
+    def create(self, ts = 0):
         basedir = os.path.dirname(self._path)
         if basedir and not os.path.exists(basedir):
             os.makedirs(basedir)
