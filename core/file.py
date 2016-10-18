@@ -9,6 +9,7 @@ import librsync
 import os
 import xmlrpclib
 import errno
+import hashlib
 
 def _tmp_file():
     return tempfile.SpooledTemporaryFile(max_size=1024 ** 2 * 5, mode='w+')
@@ -99,3 +100,11 @@ class File:
     @property
     def changed(self):
         return os.path.getmtime(self._path)
+
+    @property
+    def checksum(self):
+        hash = hashlib.md5()
+        with open(self._path, "rb") as f:
+            for block in iter(lambda: f.read(65536), b""):
+                hash.update(block)
+        return hash.hexdigest()

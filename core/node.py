@@ -78,17 +78,27 @@ class ClientNode(Node):
         Node.__init__(self, host, watch_dir)
         self._server = ServerProxy(self._host)
 
+    """
+    " Uploads file to remote dir.
+    """
     def _upload(self, f, fn):
         signature = self._server.signature(fn)
-        tmp = server_services.tmp_file(signature.data)
-        delta = f.delta(tmp)
-        self._server.patch(fn, server_services.raw(delta))
+        tmp = server_services.tmp_file(signature.data) if signature else False
+        delta = f.delta(tmp) if tmp else False
+        if not tmp or not self._server.patch(fn, server_services.raw(delta)):
+            print "Cound not patch file", fn
 
+    """
+    " Downloads file to local dir.
+    """
     def _download(self, f, fn):
         signature = f.signature()
         delta = self._server.delta(fn, server_services.raw(signature))
-        tmp = server_services.tmp_file(delta.data)
-        f.patch(tmp)
+        tmp = server_services.tmp_file(delta.data) if delta else False
+        if tmp:
+            f.patch(tmp)
+        else:
+            print "Cound not patch file", fn, tmp
 
     """
     " Starts monitoring the dir.
@@ -105,7 +115,7 @@ class ClientNode(Node):
                 f = File(self._dir + fn)
                 upload = True
                 if fn in remote_files:
-                    if f.size == remote_files[fn]['size']:
+                    if f.checksum == remote_files[fn]['checksum']:
                         print ". skipping", fn
                         continue
 
@@ -118,13 +128,13 @@ class ClientNode(Node):
                 else:
                     print "- downloading", fn
                     self._download(f, fn)
-            
+
             for fn in remote_files:
                 f = File(self._dir + fn)
                 if f.exists:
                     continue
-                
-                print "- downloading", fn
+
+                print "- downloading new", fn
                 self._download(f, fn)
 
             print "*",
