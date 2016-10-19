@@ -83,44 +83,12 @@ class ServerServices:
     def __init__(self, d):
         self._dir = d
 
-    def __locked_key(self, fn):
-        return self._dir + fn + ".syncopy_locked"
-
-    def __locked(self, fn):
-        return os.path.exists(self.__locked_key(fn))
-
-    def __lock(self, fn):
-        try:
-            log_info("Lock file {}".format(fn))
-            os.makedirs(self.__locked_key(fn))
-        except:
-            pass
-
-    def __unlock(self, fn):
-        try:
-            log_info("Unlock file {}".format(fn))
-            os.rmdir(self.__locked_key(fn))
-        except:
-            pass
-
-    def __wait_unlocked(self, fn):
-        i = 0
-        while self.__locked(fn) and i < 10:
-            log_info("/waiting: {}: {}".format(i, fn))
-            i += 1
-            time.sleep(2)
-
-        return not self.__locked(fn)
-
     """
     " @return Signature of the file by \a fn.
     " @param string Filename.
     """
     def signature(self, fn):
         log_info("Creating signature for {}".format(fn))
-        if not self.__wait_unlocked(fn):
-            log_error("File is locked {}".format(fn))
-            return False
 
         return raw(File(self._dir + fn).signature())
 
@@ -131,9 +99,6 @@ class ServerServices:
     """
     def delta(self, fn, signature):
         log_info("Creating delta for {}".format(fn))
-        if not self.__wait_unlocked(fn):
-            log_error("File is locked {}".format(fn))
-            return False
 
         return raw(File(self._dir + fn).delta(tmp_file(signature.data)))
 
@@ -144,19 +109,13 @@ class ServerServices:
     """
     def patch(self, fn, delta, ts):
         log_info("Patching {}".format(fn))
-        if not self.__wait_unlocked(fn):
-            log_error("File is locked {}".format(fn))
-            return False
 
-        self.__lock(fn)        
         f = File(self._dir + fn)
         f.patch(tmp_file(delta.data))
-        f.touch(ts)
         try:
             File(self._dir + removed_filename(fn)).remove()
         except:
             pass
-        self.__unlock(fn)
 
         return True
 
@@ -171,8 +130,6 @@ class ServerServices:
     """
     def remove_file(self, fn):
         log_info("Removing file {}".format(fn))
-        self.__lock(fn)
         File(self._dir + fn).rename(self._dir + removed_filename(fn))
-        self.__unlock(fn)
 
         return True
