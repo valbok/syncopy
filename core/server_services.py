@@ -55,8 +55,8 @@ def file_table(d):
 """
 def removed_filename(fn):
     fs = fn.split("/")
-    f = fs[len(fs) - 1]
-    del fs[len(fs) - 1]
+    f = fs[-1]
+    del fs[-1]
     bs = "/".join(fs)
     if bs:
         bs += "/"
@@ -70,7 +70,7 @@ def removed_file(fn):
     fn = os.path.basename(fn)
     fs = fn.split(".")
 
-    return fs[0] == "" and fs[len(fs) - 1] == "syncopy_removed"
+    return fs[0] == "" and fs[-1] == "syncopy_removed"
 
 """
 " @return True if filename is internal and should not be synced.
@@ -78,7 +78,7 @@ def removed_file(fn):
 def synced_file(fn):
     fs = fn.split(".")
 
-    return fs[len(fs) - 1] == "synced"
+    return fs[-1] == "synced"
 
 """
 " Handles requests from remote clients.
