@@ -154,10 +154,7 @@ class ClientNode(Node):
 
             for fn in remote_files:
                 f = File(self._dir + fn)
-                if f.exists():
-                    continue
-
-                if server_services.removed_file(fn):
+                if f.exists() or server_services.removed_file(fn) or server_services.synced_file(fn):
                     continue
 
                 f.create(remote_files[fn]["changed"])

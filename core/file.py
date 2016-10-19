@@ -150,6 +150,5 @@ class File:
     " Renames current file.
     """
     def rename(self, fn):
-        print("renaming to file {}".format(fn))
         os.rename(self._path, fn)
         File(fn).touch()

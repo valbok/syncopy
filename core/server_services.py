@@ -13,7 +13,7 @@ import os
 import time
 
 """
-" @return Prepared binary data to be sent via rpc.s
+" @return Prepared binary data to be sent via rpc.
 """
 def raw(f):
     f.seek(0)
@@ -21,7 +21,7 @@ def raw(f):
     return xmlrpclib.Binary(f.read())
 
 """
-" @return Prepared binary data to be sent via rpc.s
+" @return Tempfile that could be used to patch using rdiff.
 """
 def tmp_file(data):
     tmp = tempfile.SpooledTemporaryFile(max_size=1024 ** 2 * 5, mode='w+')
@@ -73,6 +73,14 @@ def removed_file(fn):
     return fs[0] == "" and fs[len(fs) - 1] == "syncopy_removed"
 
 """
+" @return True if filename is internal and should not be synced.
+"""
+def synced_file(fn):
+    fs = fn.split(".")
+
+    return fs[len(fs) - 1] == "synced"
+
+"""
 " Handles requests from remote clients.
 """
 class ServerServices:
@@ -111,6 +119,7 @@ class ServerServices:
         log_info("Patching {}".format(fn))
 
         f = File(self._dir + fn)
+        f.create()
         f.patch(tmp_file(delta.data))
         try:
             File(self._dir + removed_filename(fn)).remove()
