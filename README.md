@@ -1,7 +1,7 @@
 # syncopy
 
 Syncopy is supposed to synchronize files between few locations.
-Uses HTTP to transfer data and librsync to avoid unnecessary trafic and basic auth.
+Uses HTTP (with BASIC AUTH) to transfer data and librsync to avoid unnecessary network traffic.
 
 **Topology**
 
@@ -10,8 +10,8 @@ Uses HTTP to transfer data and librsync to avoid unnecessary trafic and basic au
             <Client> <Client> <Client>
 
 All clients and master node will be syncrhonized.
-If new files appear, change or delete on a client, all clients will get synchronized.
-If change/modify a file on the master node, all clients will get synchronized too (except removed files, they will be fetched from clients again)
+If new files appear, changed or deleted on a client, all clients will get synchronized.
+If to change/modify a file on the master node, all clients will get synchronized too (except removed files, they will be fetched from clients to server again)
 
 # Usage
 
