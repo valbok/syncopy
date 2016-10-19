@@ -127,7 +127,7 @@ class File:
     def touch(self, ts = 0):
         if not ts:
             ts = time.time()
-        print ts
+
         with open(self._path, 'a'):
             os.utime(self._path, (ts,ts))
 
