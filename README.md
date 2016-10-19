@@ -32,3 +32,4 @@ Start clients
 **todo**
 
 - SSL for rpc server.
+- Hard to transfer big files, sometimes not enough memory.
