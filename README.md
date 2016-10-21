@@ -13,6 +13,8 @@ All clients and master node will be syncrhonized.
 If new files appear, changed or deleted on a client, all clients will get synchronized.
 If to change/modify a file on the master node, all clients will get synchronized too (except removed files, they will be fetched from clients to server again)
 
+Note: server can be started on non existent dir, if a client will try to upload anything, the dir will be created. Also if the dir is not empty, all clients will download dir's files.
+
 # Usage
 
 Start the server
