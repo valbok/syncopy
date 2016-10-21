@@ -1,6 +1,6 @@
 # syncopy
 
-Syncopy is supposed to synchronize files between few locations.
+Syncopy a prototype of a tool that supposed to synchronize files between few locations.
 Uses HTTP (with BASIC AUTH) to transfer data and librsync to avoid unnecessary network traffic.
 
 **Topology**
