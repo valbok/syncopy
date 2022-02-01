@@ -1,0 +1,12 @@
+set(SOURCES
+    file.cpp
+)
+
+add_library(${PROJECT_NAME} SHARED ${SOURCES})
+set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${PUBLIC_HEADERS}")
+target_link_libraries(${PROJECT_NAME} ${OPENSSL_LIBRARIES} stdc++fs)
+
+install(TARGETS ${PROJECT_NAME}
+ 	LIBRARY DESTINATION lib
+ 	PUBLIC_HEADER DESTINATION include/${PROJECT_NAME}
+)
