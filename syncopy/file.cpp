@@ -201,14 +201,11 @@ namespace syncopy
 
                         data.erase(data.begin(), data.begin() + i + 1);
                         result.chunks.push_back({matched.pos, missed_pos + missed_data.size(), {}, matched.size});
-                        i = 0;
-                    } else {
-                        ++i;
+                        i = -1;
                     }
-                } else {
-                    ++i;
                 }
 
+                ++i;
                 ++bytes_count;
             }
         }
