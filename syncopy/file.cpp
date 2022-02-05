@@ -102,13 +102,13 @@ namespace syncopy
         struct utimbuf buf;
         buf.modtime = ts;
         if (utime(_path.c_str(), &buf) != 0)
-            std::cout <<"Could not change mtime" << std::endl;
+            std::cout << "Could not change mtime" << std::endl;
     }
 
     void File::chmod(mode_t mode)
     {
         if (::chmod(_path.c_str(), mode) != 0)
-            std::cout <<"Could not change mtime" << std::endl;
+            std::cout << "Could not change mode" << std::endl;
     }
 
     std::vector<uint8_t> File::readAll() const
