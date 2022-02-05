@@ -10,6 +10,11 @@ Implemented simplified version of rsync.
 
 # Example
 
+You have 2 files: `source_file.txt` and `destination_file.txt` and you would like to make `destination_file.txt` file identical with the `source_file.txt`.
+First, you would need to create a `signature` of the destination file.
+Next, create a `delta` of the source file based on the signature.
+And finally, patch the destination file by the detla.
+
       $ ./signature destination_file.txt
       destination file : destination_file.txt
       size             : 1106
