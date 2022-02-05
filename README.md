@@ -25,7 +25,7 @@ Implemented simplified version of rsync.
 # RPC
 Start the rpc server
 
-      $ cd path/to/upload; ./server path/to/sync/dir
+      $ cd path/to/upload; ./server
 
 Start the rpc client
 
