@@ -41,6 +41,11 @@ Start the rpc client
 
       $ cd where/files/monitored ./client
 
+
+Now any changes you would do in `where/files/monitored` will appear in `path/to/upload` using 3 steps uploading.
+The same part of files will not be transfered, but only modified ones.
+
+
 **todo**
 
 - Don't load files to memory when creating signatures, deltas or when patching.
