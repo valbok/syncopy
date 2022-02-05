@@ -4,7 +4,6 @@
 
 #include "file.h"
 #include <iostream>
-#include <fstream>
 
 int main(int argc, char *argv[])
 {
@@ -26,9 +25,7 @@ int main(int argc, char *argv[])
 
     auto sig = file.signature(argc < 3 ? 500 : std::stoi(argv[2]));
     auto fn_sig = fn + ".sig";
-    std::ofstream stream(fn_sig);
-    sig.serialize(stream);
-
+    sig.save(fn_sig);
     std::cout << "signature file   : " << fn_sig << std::endl;
     std::cout << "window           : " << sig.window << std::endl;
     std::cout << "chunks           : " << sig.chunks.size() << std::endl;

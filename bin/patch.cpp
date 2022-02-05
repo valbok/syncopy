@@ -4,7 +4,6 @@
 
 #include "file.h"
 #include <iostream>
-#include <fstream>
 
 int main(int argc, char *argv[])
 {
@@ -13,15 +12,8 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    std::ifstream f(argv[1]);
-
-    if (!f.good()) {
-        std::cerr << "Could not open delta file: " << argv[1] << std::endl;
-        return EXIT_FAILURE;
-    }
-
     syncopy::Delta delta;
-    if (!delta.deserialize(f)) {
+    if (!delta.load(argv[1])) {
         std::cerr << "Could not recognize delta file: " << argv[1] << std::endl;
         return EXIT_FAILURE;
     }
