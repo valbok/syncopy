@@ -224,7 +224,6 @@ namespace syncopy
         MD5_Final(md5, &mdContext);
         result.md5 = toString(md5);
         result.st = stat(_path);
-        //mtime = mtime();
 
         return result;
     }
