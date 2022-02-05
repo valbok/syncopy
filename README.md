@@ -1,7 +1,12 @@
 # syncopy
 
-Syncopy is a prototype of a tool that supposed to synchronize files between several locations.
+Prototype to synchronize files between several locations.
 Implemented simplified version of rsync.
+
+# Build
+
+      $ git submodule update --init --recursive
+      $ mkdir build; cd build; cmake ../; make -j8
 
 # Example
 
