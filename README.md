@@ -35,7 +35,7 @@ And finally, patch the destination file by the detla.
 # RPC
 Start the rpc server
 
-      $ ./bin/server path/to/upload; 
+      $ ./bin/server path/to/upload
 
 Start the rpc client
 
