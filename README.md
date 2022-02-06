@@ -56,3 +56,7 @@ The same part of files will not be transfered, but only modified ones.
 - Combine found multiple chunks to one to reduce bandwidth.
 - Optimaize creating signatures and patching.
 
+- For rpc, use some security.
+- Upload files parallelly
+
+
