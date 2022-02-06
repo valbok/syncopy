@@ -313,4 +313,9 @@ namespace syncopy
     {
         fs::remove_all(dir);
     }
+
+    void File::chdir(const std::string &dir)
+    {
+        fs::current_path(dir);
+    }
 }

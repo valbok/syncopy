@@ -11,9 +11,19 @@ const std::string syncopy_ext = ".syncopy";
 
 int main(int argc, char *argv[])
 {
-    const std::string host = argc > 1 ? argv[1] : "127.0.0.1";
-    const uint16_t port = argc > 2 ? std::stoi(argv[2]) : 4567;
+    if (argc < 2) {
+        std::cout << argv[0] << " SOURCE_DIR [HOST [PORT]]" << std::endl;
+        return 0;
+    }
 
+    const std::string src_dir = argv[1];
+    const std::string host = argc > 2 ? argv[2] : "127.0.0.1";
+    const uint16_t port = argc > 3 ? std::stoi(argv[3]) : 4567;
+
+    std::cout << "src dir : " << src_dir << std::endl;
+    std::cout << "host    : " << host << std::endl;
+    std::cout << "port    : " << port << std::endl;
+    syncopy::File::chdir(src_dir);
     try {
         rpc::client client(host, port);
 
@@ -23,20 +33,32 @@ int main(int argc, char *argv[])
 
             for (auto &d : remote_dirs) {
                 auto it = local_dirs.find(d);
-                if (it == local_dirs.end())
+                if (it == local_dirs.end()) {
+                    std::cout << "> removing dir: " << d << " ...";
                     client.call("rmdir", d);
+                    std::cout << " < ok" << std::endl;
+                }
             }
 
-            for (auto &d : local_dirs)
-                client.call("mkdir", d);
+            for (auto &d : local_dirs) {
+                auto it = remote_dirs.find(d);
+                if (it == remote_dirs.end()) {
+                    std::cout << "> creating dir: " << d << " ...";
+                    client.call("mkdir", d);
+                    std::cout << " < ok" << std::endl;
+                }
+            }
 
             auto remote_files = client.call("files").as<std::map<std::string, syncopy::rpc::Stat>>();
             auto local_files = syncopy::rpc::files(".");
 
             for (auto &f : remote_files) {
                 auto it = local_files.find(f.first);
-                if (it == local_files.end())
+                if (it == local_files.end()) {
+                    std::cout << "> removing file: " << f.first << " ...";
                     client.call("rmdir", f.first);
+                    std::cout << " < ok" << std::endl;
+                }
             }
 
             for (auto &f : local_files) {

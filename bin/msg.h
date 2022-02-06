@@ -73,5 +73,15 @@ namespace syncopy
             std::string data;
             MSGPACK_DEFINE(data);
         };
+
+        std::string escape(std::string path)
+        {
+            path = "./" + path;
+            std::string p = "../";
+            auto n = p.size();
+            for (auto i = path.find(p); i != std::string::npos; i = path.find(p))
+                path.erase(i, n);
+            return path != "./" ? path : std::string{};
+        }
     }
 }

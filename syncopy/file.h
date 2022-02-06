@@ -54,6 +54,7 @@ namespace syncopy
         static std::vector<std::string> dirs(const std::string &dir);
         static void mkdir(const std::string &dir);
         static void rmdir(const std::string &dir);
+        static void chdir(const std::string &dir);
     private:
         std::string _path;
     };

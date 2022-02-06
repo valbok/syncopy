@@ -8,25 +8,52 @@
 
 int main(int argc, char *argv[])
 {
-    const std::string host = argc > 1 ? argv[1] : "127.0.0.1";
-    const uint16_t port = argc > 2 ? std::stoi(argv[2]) : 4567;
+    if (argc < 2) {
+        std::cout << argv[0] << " DESTINATION_DIR [HOST [PORT]]" << std::endl;
+        return 0;
+    }
 
-    std::cout << "host: " << host << std::endl;
-    std::cout << "port: " << port << std::endl;
+    const std::string dst_dir = argv[1];
+    const std::string host = argc > 2 ? argv[2] : "127.0.0.1";
+    const uint16_t port = argc > 3 ? std::stoi(argv[3]) : 4567;
+
+    std::cout << "dst dir : " << dst_dir << std::endl;
+    std::cout << "host    : " << host << std::endl;
+    std::cout << "port    : " << port << std::endl;
+    syncopy::File::chdir(dst_dir);
     try {
         rpc::server srv(host, port);
 
         srv.bind("dirs", [] { return syncopy::rpc::dirs("."); });
-        srv.bind("mkdir", [] (const std::string &dir) { syncopy::File::mkdir(dir); });
-        srv.bind("rmdir", [] (const std::string &dir) { syncopy::File::rmdir(dir); });
+        srv.bind("mkdir", [] (const std::string &d) {
+            auto dir = syncopy::rpc::escape(d);
+            if (dir.empty())
+                return;
+            std::cout << "mkdir: " << dir << std::endl;
+            syncopy::File::mkdir(dir);
+        });
+        srv.bind("rmdir", [] (const std::string &d) {
+            auto dir = syncopy::rpc::escape(d);
+            if (dir.empty())
+                return;
+            std::cout << "rmdir: " << dir << std::endl;
+            syncopy::File::rmdir(dir);
+        });
         srv.bind("files", [] { return syncopy::rpc::files("."); });
-        srv.bind("signature", [] (const std::string &path) {
+        srv.bind("signature", [] (const std::string &p) {
+            auto path = syncopy::rpc::escape(p);
+            if (path.empty())
+                return syncopy::rpc::Msg<syncopy::Signature>{};
+            std::cout << "signature: " << path << std::endl;
             syncopy::File f(path);
             return syncopy::rpc::Msg<syncopy::Signature>(f.signature());
         });
-
-        srv.bind("patch", [] (const std::string &path, const syncopy::rpc::Msg<syncopy::Delta> &msg) {
+        srv.bind("patch", [] (const std::string &p, const syncopy::rpc::Msg<syncopy::Delta> &msg) {
             bool result = true;
+            auto path = syncopy::rpc::escape(p);
+            if (path.empty())
+                return false;
+            std::cout << "patch: " << path << std::endl;
             syncopy::File dst(path);
             if (!dst.exists())
                 dst.write({});
@@ -37,7 +64,6 @@ int main(int argc, char *argv[])
             }
             return result;
         });
-
 
         srv.run();
     } catch (const std::exception &e) {
