@@ -35,18 +35,24 @@ And finally, patch the destination file by the detla.
 # RPC
 Start the rpc server
 
-      $ cd path/to/upload; ./server
+      $ ./bin/server cd path/to/upload; 
 
 Start the rpc client
 
-      $ cd where/files/monitored ./client
+      $ ./bin/client where/files/monitored
 
 
-Now any changes you would do in `where/files/monitored` will appear in `path/to/upload` using 3 steps uploading.
+Now any changes you would do in `where/files/monitored` will appear in `path/to/upload` using 3 steps uploading: signatura -> delta -> patch.
+
 The same part of files will not be transfered, but only modified ones.
 
 
 **todo**
 
-- Don't load files to memory when creating signatures, deltas or when patching.
+- Don't load files or whole data to memory.
 - Don't use unix dependent code, use std when possible.
+- Don't relay on unix paths.
+- Accelerate hash creating.
+- Combine found multiple chunks to one to reduce bandwidth.
+- Optimaize creating signatures and patching.
+
