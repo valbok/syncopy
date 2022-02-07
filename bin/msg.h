@@ -76,6 +76,8 @@ namespace syncopy
 
         std::string escape(std::string path)
         {
+            if (path.substr(0, 2) == "./")
+                path.erase(0, 2);
             path = "./" + path;
             std::string p = "../";
             auto n = p.size();

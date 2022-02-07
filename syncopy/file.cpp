@@ -61,6 +61,11 @@ namespace syncopy
         return p.parent_path();
     }
 
+    std::string File::filename() const
+    {
+        return fs::path(_path).filename();
+    }
+
     std::string File::ext() const
     {
         fs::path p = _path;
@@ -235,7 +240,8 @@ namespace syncopy
         MD5_CTX mdContext;
         MD5_Init(&mdContext);
 
-        std::string fn = _path + ".syncopy";
+        // @TODO: Avoid tmp dir
+        std::string fn = "/tmp/" + filename() + ".syncopy";
         std::unique_ptr<FILE, int(*)(FILE*)> syncopy(fopen(fn.c_str(), "w"), &fclose);
         if (!syncopy) {
             std::cerr << "Could not open file: " << fn << std::endl;

@@ -33,6 +33,7 @@ namespace syncopy
 
         std::string path() const { return _path; }
         std::string parent_path() const;
+        std::string filename() const;
         std::string ext() const;
         size_t size() const;
         time_t mtime() const;
