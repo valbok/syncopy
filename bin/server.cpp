@@ -20,8 +20,8 @@ int main(int argc, char *argv[])
     std::cout << "dst dir : " << dst_dir << std::endl;
     std::cout << "host    : " << host << std::endl;
     std::cout << "port    : " << port << std::endl;
-    syncopy::File::chdir(dst_dir);
     try {
+        syncopy::File::chdir(dst_dir);
         rpc::server srv(host, port);
 
         srv.bind("dirs", [] { return syncopy::rpc::dirs("."); });

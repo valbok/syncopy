@@ -81,10 +81,10 @@ int main(int argc, char *argv[])
     std::cout << "src dir : " << src_dir << std::endl;
     std::cout << "host    : " << host << std::endl;
     std::cout << "port    : " << port << std::endl;
-    syncopy::File::chdir(src_dir);
     std::vector<std::thread> threads;
     Syncopy syncopy(host, port);
     try {
+        syncopy::File::chdir(src_dir);
         for (int i = 0; i < 4; ++i)
             threads.push_back(std::thread(worker, std::ref(syncopy)));
 
