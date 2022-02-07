@@ -51,12 +51,10 @@ The same part of files will not be transfered, but only modified ones.
 
 - Don't load files or whole data to memory.
 - Don't use unix dependent code, use std when possible.
-- Don't relay on unix paths.
+- Don't rely on unix paths.
 - Accelerate hash creating.
-- Combine found multiple chunks to one to reduce bandwidth.
-- Optimaize creating signatures and patching.
+- Combine found multiple chunks to one to reduce bandwidth, or optimaize creating signatures and patching using chunks
 
-- For rpc, use some security.
-- Upload files parallelly
+- For rpc example, use some security.
 
 
