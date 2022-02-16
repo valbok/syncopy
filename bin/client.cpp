@@ -62,7 +62,7 @@ void worker(Syncopy &syncopy)
         else
             std::cerr << fn << ": could not patch" << std::endl;
 
-        while (!locker.try_lock());
+        locker.lock();
         syncopy.pending.erase(fn);
     }
 }
